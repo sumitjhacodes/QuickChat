@@ -10,7 +10,7 @@ export const getJWTSecret = (): string => {
 
 export const generateJWTToken = (payload: string | object | Buffer) => {
   return jwt.sign(payload, getJWTSecret(), {
-    expiresIn: 15,
+    expiresIn: "15m",
   });
 };
 

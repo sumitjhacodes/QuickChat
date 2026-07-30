@@ -1,13 +1,25 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { verifyJWTToken } from "../utils/jwt.js";
 
+const getTokenFromRequest = (req: Request): string | undefined => {
+  if (req.cookies?.token) {
+    return req.cookies.token;
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return undefined;
+  }
+
+  return authHeader.split(" ")[1];
+};
+
 export const userAuth = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const token =
-      req.cookies?.token || req.headers.authorization?.split(" ")[1];
+    const token = getTokenFromRequest(req);
 
     if (!token) {
-      throw new Error("Token does not exist");
+      throw new Error("Authorization token is required");
     }
 
     const payload = verifyJWTToken(token);
@@ -19,7 +31,7 @@ export const userAuth = (req: Request, res: Response, next: NextFunction) => {
       error instanceof Error ? error.message : "Authentication failed";
 
     return res.status(401).json({
-      status: "Failed",
+      status: "fail",
       message,
     });
   }
