@@ -51,11 +51,11 @@ const userSchema = new Schema<IUser>(
   {
     timestamps: true, // Automatically manages createdAt and updatedAt
     versionKey: false, // Removes the __v field from documents
-  }
+  },
 );
 
 // 3. Pre-save Hook: Hash password before saving to the database
-userSchema.pre<IUser>("save", async function (next) {
+userSchema.pre<IUser>("save", async function (next: (err?: any) => void) {
   // Only hash the password if it has been modified or is new
   if (!this.isModified("password")) {
     return next();
@@ -72,7 +72,7 @@ userSchema.pre<IUser>("save", async function (next) {
 
 // 4. Instance Method: Safely compare passwords during login
 userSchema.methods.comparePassword = async function (
-  candidatePassword: string
+  candidatePassword: string,
 ): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
