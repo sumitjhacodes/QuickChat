@@ -18,8 +18,6 @@ const io = new Server(server, {
   },
 });
 
-app.set("trust proxy", process.env.NODE_ENV === "production");
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -37,22 +35,6 @@ app.use("/api/auth", authRouter);
 
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({ status: "ok", uptime: process.uptime() });
-});
-
-app.use((req: Request, res: Response) => {
-  res.status(404).json({ status: "fail", message: "Resource not found" });
-});
-
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error(err);
-
-  res.status(500).json({
-    status: "error",
-    message:
-      process.env.NODE_ENV === "production"
-        ? "Internal server error"
-        : err.message,
-  });
 });
 
 io.on("connection", (socket) => {
