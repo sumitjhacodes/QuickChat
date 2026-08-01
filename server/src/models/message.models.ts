@@ -5,6 +5,7 @@ export interface IMessage extends Document {
   receiver: Types.ObjectId;
   room: string;
   content: string;
+  isRead: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,12 +35,17 @@ const messageSchema = new Schema<IMessage>(
       required: true,
       trim: true,
     },
+    isRead: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
     versionKey: false,
     toJSON: {
-      transform(document, returnedObject) {
+      transform(_document, returnedObject: Record<string, any>) {
         returnedObject.id = returnedObject._id.toString();
         delete returnedObject._id;
       },
