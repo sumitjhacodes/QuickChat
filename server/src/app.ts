@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db.js";
 import authRouter from "./routes/auth.routes.js";
+import chatRouter from "./routes/chat.routes.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -23,6 +24,7 @@ app.use(
 connectDB();
 
 app.use("/api/auth", authRouter);
+app.use("/api/chat", chatRouter);
 
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({ status: "ok", uptime: process.uptime() });
