@@ -3,8 +3,11 @@ import mongoose, { Schema, Document, type Types } from "mongoose";
 export interface IMessage extends Document {
   sender: Types.ObjectId;
   receiver: Types.ObjectId;
+  conversationId: Types.ObjectId;
   room: string;
   content: string;
+  type: string;
+  status: string;
   isRead: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -24,6 +27,12 @@ const messageSchema = new Schema<IMessage>(
       required: true,
       index: true,
     },
+    conversationId: {
+      type: Schema.Types.ObjectId,
+      ref: "Conversation",
+      required: true,
+      index: true,
+    },
     room: {
       type: String,
       required: true,
@@ -34,6 +43,16 @@ const messageSchema = new Schema<IMessage>(
       type: String,
       required: true,
       trim: true,
+    },
+    type: {
+      type: String,
+      enum: ["text", "image", "video", "file"],
+      default: "text",
+    },
+    status: {
+      type: String,
+      enum: ["sent", "delivered", "seen"],
+      default: "sent",
     },
     isRead: {
       type: Boolean,
