@@ -7,7 +7,8 @@ export interface IMessage extends Document {
   room: string;
   content: string;
   type: string;
-  isRead: boolean;
+  status: string;
+  isRead?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,10 +49,10 @@ const messageSchema = new Schema<IMessage>(
       enum: ["text", "image", "video", "file"],
       default: "text",
     },
-    isRead: {
-      type: Boolean,
-      default: false,
-      index: true,
+    status: {
+      type: String,
+      enum: ["sent", "delivered", "seen"],
+      default: "sent",
     },
   },
   {
@@ -65,6 +66,11 @@ const messageSchema = new Schema<IMessage>(
     },
   },
 );
+
+messageSchema.index({
+    conversationId:1,
+    createdAt:-1
+});
 
 const Message = mongoose.model<IMessage>("Message", messageSchema);
 export default Message;
