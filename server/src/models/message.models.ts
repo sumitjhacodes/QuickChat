@@ -7,7 +7,6 @@ export interface IMessage extends Document {
   room: string;
   content: string;
   type: string;
-  status: string;
   isRead: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -48,11 +47,6 @@ const messageSchema = new Schema<IMessage>(
       type: String,
       enum: ["text", "image", "video", "file"],
       default: "text",
-    },
-    status: {
-      type: String,
-      enum: ["sent", "delivered", "seen"],
-      default: "sent",
     },
     isRead: {
       type: Boolean,
