@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, type Types } from "mongoose";
+import mongoose, { Schema, type Document, type Types } from "mongoose";
 
 export interface IMessage extends Document {
   sender: Types.ObjectId;
@@ -6,9 +6,13 @@ export interface IMessage extends Document {
   conversationId: Types.ObjectId;
   room: string;
   content: string;
-  type: string;
-  status: string;
-  isRead?: boolean;
+  type: "text" | "image" | "video" | "file";
+  status: "sent" | "delivered" | "seen";
+  clientMessageId?: string;
+  isDeleted: boolean;
+  deletedAt?: Date | null;
+  deletedBy?: Types.ObjectId | null;
+  readBy?: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +58,29 @@ const messageSchema = new Schema<IMessage>(
       enum: ["sent", "delivered", "seen"],
       default: "sent",
     },
+    clientMessageId: {
+      type: String,
+      trim: true,
+      index: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    readBy: {
+      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -67,10 +94,7 @@ const messageSchema = new Schema<IMessage>(
   },
 );
 
-messageSchema.index({
-    conversationId:1,
-    createdAt:-1
-});
+messageSchema.index({ conversationId: 1, createdAt: -1 });
 
 const Message = mongoose.model<IMessage>("Message", messageSchema);
 export default Message;
