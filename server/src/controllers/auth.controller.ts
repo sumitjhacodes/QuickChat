@@ -1,4 +1,6 @@
 import { type Request, type Response } from "express";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
 import User from "../models/user.models.js";
 import { generateJWTToken } from "../utils/jwt.js";
 
@@ -6,8 +8,19 @@ const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "strict" as const,
-  maxAge: 15 * 60 * 1000, // 15 minutes
+  maxAge: 15 * 60 * 1000,
 };
+
+const signupSchema = z.object({
+  username: z.string().trim().min(3).max(30),
+  email: z.string().trim().email(),
+  password: z.string().min(8),
+});
+
+const loginSchema = z.object({
+  email: z.string().trim().email(),
+  password: z.string().min(8),
+});
 
 const createAuthToken = (userId: string) => {
   return generateJWTToken({ id: userId });
@@ -27,20 +40,22 @@ const formatUserResponse = (user: {
 
 export const signup = async (req: Request, res: Response) => {
   try {
-    const { username, email, password } = req.body;
-
-    if (!username || !email || !password) {
+    const parsed = signupSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         status: "fail",
-        message: "Username, email, and password are required.",
+        message: "Please provide a valid username, email, and password.",
+        errors: parsed.error.flatten().fieldErrors,
       });
     }
 
+    const { username, email, password } = parsed.data;
     const existingUser = await User.findOne({
       $or: [
         { email: email.toLowerCase() },
         { username: username.toLowerCase() },
       ],
+      isDeleted: false,
     });
 
     if (existingUser) {
@@ -50,10 +65,12 @@ export const signup = async (req: Request, res: Response) => {
       });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await User.create({
       username: username.trim(),
       email: email.trim().toLowerCase(),
-      password,
+      password: hashedPassword,
     });
 
     const token = createAuthToken(user.id);
@@ -77,18 +94,20 @@ export const signup = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         status: "fail",
-        message: "Email and password are required.",
+        message: "Please provide a valid email and password.",
+        errors: parsed.error.flatten().fieldErrors,
       });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).select(
-      "+password",
-    );
+    const { email, password } = parsed.data;
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+      isDeleted: false,
+    }).select("+password");
 
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({
