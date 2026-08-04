@@ -1,18 +1,19 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, type Document } from "mongoose";
 import bcrypt from "bcryptjs";
 
-// 1. Extend the Interface to include Mongoose Document properties
 export interface IUser extends Document {
   username: string;
   email: string;
   password: string;
   status: boolean;
+  isDeleted: boolean;
+  deletedAt?: Date | null;
+  lastSeen?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-// 2. Define the Schema with validations and indexes
 const userSchema = new Schema<IUser>(
   {
     username: {
@@ -23,7 +24,7 @@ const userSchema = new Schema<IUser>(
       lowercase: true,
       minlength: [3, "Username must be at least 3 characters long"],
       maxlength: [30, "Username cannot exceed 30 characters"],
-      index: true, // Optimizes lookup queries
+      index: true,
     },
     email: {
       type: String,
@@ -41,42 +42,37 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, "Password is required"],
       minlength: [8, "Password must be at least 8 characters long"],
-      select: false, // Prevents password from being returned in queries by default
+      select: false,
     },
     status: {
       type: Boolean,
-      default: true, // Default to active
+      default: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    lastSeen: {
+      type: Date,
+      default: null,
     },
   },
   {
-    timestamps: true, // Automatically manages createdAt and updatedAt
-    versionKey: false, // Removes the __v field from documents
+    timestamps: true,
+    versionKey: false,
   },
 );
 
-// 3. Pre-save Hook: Hash password before saving to the database
-userSchema.pre<IUser>("save", async function (next: (err?: any) => void) {
-  // Only hash the password if it has been modified or is new
-  if (!this.isModified("password")) {
-    return next();
-  }
-
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// 4. Instance Method: Safely compare passwords during login
 userSchema.methods.comparePassword = async function (
   candidatePassword: string,
 ): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// 5. Export the Model
 const User = mongoose.model<IUser>("User", userSchema);
 export default User;
