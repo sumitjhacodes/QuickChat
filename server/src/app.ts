@@ -5,6 +5,7 @@ import { connectDB } from "./database/db.js";
 import authRouter from "./routes/auth.routes.js";
 import chatRouter from "./routes/chat.routes.js";
 import dotenv from "dotenv";
+import { env } from "./config/env.js";
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN ?? "*",
+    origin: env.CORS_ORIGIN ?? "*",
     credentials: true,
   }),
 );
