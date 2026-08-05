@@ -3,10 +3,11 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import User from "../models/user.models.js";
 import { generateJWTToken } from "../utils/jwt.js";
+import { env } from "node:process";
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: env.NODE_ENV === "production",
   sameSite: "strict" as const,
   maxAge: 15 * 60 * 1000,
 };
