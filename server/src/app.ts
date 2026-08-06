@@ -14,9 +14,22 @@ const app: Express = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+const allowedOrigins = [
+  env.CORS_ORIGIN,
+  "http://localhost:3000",
+  "http://localhost:5173",
+].filter(Boolean) as string[];
+
 app.use(
   cors({
-    origin: env.CORS_ORIGIN ?? "*",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origin not allowed by CORS"));
+    },
     credentials: true,
   }),
 );
