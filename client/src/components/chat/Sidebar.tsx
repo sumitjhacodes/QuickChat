@@ -1,5 +1,7 @@
 import type { AuthUser, UserSummary } from '../../types';
 
+const getUserId = (user: UserSummary) => user.id ?? user._id ?? '';
+
 interface SidebarProps {
     users: UserSummary[];
     currentUser: AuthUser | null;
@@ -42,7 +44,7 @@ export function Sidebar({
                                 <button
                                     className={`user-pill ${selectedUserId === user.id ? 'active' : ''}`}
                                     type="button"
-                                    onClick={() => onSelectUser(user.id)}
+                                    onClick={() => onSelectUser(getUserId(user))}
                                 >
                                     <span className="user-pill__name">{user.username}</span>
                                     <span className={`status-dot ${user.status ? 'online' : 'offline'}`} />

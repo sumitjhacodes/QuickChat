@@ -16,8 +16,10 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const getUserId = (user: UserSummary) => user.id ?? user._id ?? '';
+
   const selectedUser = useMemo(
-    () => users.find((user) => user.id === selectedUserId) ?? null,
+    () => users.find((user) => getUserId(user) === selectedUserId) ?? null,
     [selectedUserId, users],
   );
 
@@ -25,9 +27,13 @@ function App() {
     try {
       setIsLoading(true);
       const response = await getUsers();
-      setUsers(response.data?.users ?? []);
-      if (!selectedUserId && (response.data?.users?.length ?? 0) > 0) {
-        setSelectedUserId(response.data?.users?.[0].id ?? null);
+      const normalizedUsers = (response.data?.users ?? []).map((user) => ({
+        ...user,
+        id: user.id ?? user._id ?? '',
+      }));
+      setUsers(normalizedUsers);
+      if (!selectedUserId && normalizedUsers.length > 0) {
+        setSelectedUserId(normalizedUsers[0].id ?? null);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load users');
@@ -123,8 +129,11 @@ function App() {
 
   useEffect(() => {
     if (!selectedUserId && users.length > 0) {
-      void loadConversation(users[0].id);
-      setSelectedUserId(users[0].id);
+      const firstUserId = getUserId(users[0]);
+      if (firstUserId) {
+        void loadConversation(firstUserId);
+        setSelectedUserId(firstUserId);
+      }
     }
   }, [selectedUserId, users]);
 

@@ -6,7 +6,8 @@ export interface AuthUser {
 }
 
 export interface UserSummary {
-  id: string;
+  _id?: string;
+  id?: string;
   username: string;
   email: string;
   status: boolean;
