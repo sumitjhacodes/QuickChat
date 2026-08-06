@@ -8,14 +8,24 @@ import type {
   UserListResponse,
 } from "../types";
 
+const getAuthToken = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage.getItem("chat-token");
+};
+
 const api = async <T>(
   endpoint: string,
   init: RequestInit = {},
 ): Promise<ApiResponse<T>> => {
+  const token = getAuthToken();
   const response = await fetch(`/api${endpoint}`, {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init.headers ?? {}),
     },
     ...init,

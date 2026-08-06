@@ -57,6 +57,10 @@ function App() {
         : await loginUser(payload as AuthPayload);
 
       const authUser = (response.data as AuthResponse)?.user;
+      const token = (response.data as AuthResponse)?.token;
+      if (token) {
+        window.localStorage.setItem('chat-token', token);
+      }
       setCurrentUser(authUser);
       setMode('login');
       await loadUsers();
@@ -73,6 +77,7 @@ function App() {
     } catch {
       // ignore logout errors and clear local state
     } finally {
+      window.localStorage.removeItem('chat-token');
       setCurrentUser(null);
       setUsers([]);
       setSelectedUserId(null);
@@ -87,15 +92,17 @@ function App() {
     await loadConversation(userId);
   };
 
-  const handleSendMessage = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!selectedUserId || !draft.trim()) {
+  const handleSendMessage = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+
+    const trimmedDraft = draft.trim();
+    if (!selectedUserId || !trimmedDraft) {
       return;
     }
 
     try {
       setError('');
-      const response = await sendChatMessage(selectedUserId, draft.trim());
+      const response = await sendChatMessage(selectedUserId, trimmedDraft);
       const newMessage = response.data?.message;
       if (newMessage) {
         setMessages((previous) => [...previous, newMessage]);
@@ -162,6 +169,12 @@ function App() {
           <input
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                void handleSendMessage();
+              }
+            }}
             placeholder={selectedUser ? `Message ${selectedUser.username}` : 'Select a contact'}
             disabled={!selectedUser}
           />
